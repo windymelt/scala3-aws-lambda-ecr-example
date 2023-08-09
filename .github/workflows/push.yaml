@@ -39,13 +39,10 @@ jobs:
         docker_image_repo='${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/scala3-aws-lambda-ecr-example'
         echo "docker_image_repo=$docker_image_repo" >> "$GITHUB_OUTPUT"
         echo "docker_tag=commit-${{ github.sha }}" >> "$GITHUB_OUTPUT"
-        docker_extra_tag="main-latest"
-        echo "docker_extra_tag=$docker_extra_tag" >> "$GITHUB_OUTPUT"
     - name: Build and push
       run: |
         sbt ecr:push
       env:
         TAG: ${{ steps.vars.outputs.docker_tag }}
-        EXTRA_TAG: ${{ steps.vars.outputs.docker_extra_tag }}
     - name: Adding markdown
       run: echo '## Tag `${{ steps.vars.outputs.docker_tag }}`' >> "$GITHUB_STEP_SUMMARY"
