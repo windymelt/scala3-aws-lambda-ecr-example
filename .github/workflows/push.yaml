@@ -1,0 +1,35 @@
+name: Push
+
+# cf. https://dev.classmethod.jp/articles/github-actions-aws-sts-credentials-iamrole/
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  - push
+  - workflow_dispatch
+
+jobs:
+  build-and-push:
+    name: Build and push image to ECR
+    runs-on: ubuntu-latest
+    if: ${{ github.ref_name == 'main'}}
+    timeout-minutes: 15
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - uses: docker/setup-buildx-action@v2
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/push-to-scala3-aws-lambda-ecr-example
+        role-session-name: push-to-scala3-aws-lambda-ecr-example-role-ci-${{ github.run_id }}-${{ github.run_number }}
+        aws-region: ap-northeast-1
+        mask-aws-account-id: true
+    - name: Login to ECR
+      uses: aws-actions/amazon-ecr-login@v1
+      env:
+        AWS_REGION: ap-northeast-1
