@@ -21,12 +21,11 @@ lazy val root = project
     )
   )
   .enablePlugins(JavaAppPackaging) // for DockerPlugin
-  .enablePlugins(AshScriptPlugin) // Polyfill for alpine image
   .enablePlugins(EcrPlugin) // to upload to ECR
   .enablePlugins(DockerPlugin) // to build image
   .settings(
     // "Not alpine" (default) image doesn't contain useradd command (to make situation difficult)
-    dockerBaseImage := "amazoncorretto:17.0.8-alpine",
+    dockerBaseImage := "amazoncorretto:17.0.8",
     // DockerPlugin emits entrypoint script into /opt/docker/bin.
     // Supply "sh" to help AWS Lambda (omitting this causes permission error)
     dockerEntrypoint := Seq("sh", s"/opt/docker/bin/${name.value}"),
@@ -35,17 +34,19 @@ lazy val root = project
     dockerCmd := Seq(
       "com.github.windymelt.scala3awslambdaecrexample.Handler::hello"
     ),
+    // corretto doesn't have useradd command: specify existing `daemon` user to avoid adding user
+    Docker / daemonUserUid := None,
+    Docker / daemonUser := "daemon",
+    Docker / packageName := "scala3-aws-lambda-ecr-example",
     // We have to specify mainClass to reflect main class information to entrypoint script.
     Compile / mainClass := Some(
       "com.amazonaws.services.lambda.runtime.api.client.AWSLambda"
-    )
+    ),
+    Ecr / region := Region.getRegion(Regions.AP_NORTHEAST_1),
+    Ecr / repositoryName := "scala3-aws-lambda-ecr-example",
+    Ecr / localDockerImage := (Docker / packageName).value + ":" + (Docker / version).value,
+    Ecr / repositoryTags := Seq(
+      sys.env.get("TAG")
+    ).flatten,
+    Ecr / push := ((Ecr / push) dependsOn (Docker / publishLocal, Ecr / login)).value
   )
-
-Docker / packageName := "scala3-aws-lambda-ecr-example"
-Ecr / region := Region.getRegion(Regions.AP_NORTHEAST_1)
-Ecr / repositoryName := "scala3-aws-lambda-ecr-example"
-Ecr / localDockerImage := (Docker / packageName).value + ":" + (Docker / version).value
-Ecr / repositoryTags := Seq(
-  sys.env.get("TAG")
-).flatten
-Ecr / push := ((Ecr / push) dependsOn (Docker / publishLocal, Ecr / login)).value
