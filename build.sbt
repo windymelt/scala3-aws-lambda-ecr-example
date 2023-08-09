@@ -24,7 +24,6 @@ lazy val root = project
   .enablePlugins(EcrPlugin) // to upload to ECR
   .enablePlugins(DockerPlugin) // to build image
   .settings(
-    // "Not alpine" (default) image doesn't contain useradd command (to make situation difficult)
     dockerBaseImage := "amazoncorretto:17.0.8",
     // DockerPlugin emits entrypoint script into /opt/docker/bin.
     // Supply "sh" to help AWS Lambda (omitting this causes permission error)
