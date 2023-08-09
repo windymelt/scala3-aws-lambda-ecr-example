@@ -28,7 +28,7 @@ lazy val root = project
     dockerBaseImage := "amazoncorretto:17.0.8",
     // DockerPlugin emits entrypoint script into /opt/docker/bin.
     // Supply "sh" to help AWS Lambda (omitting this causes permission error)
-    dockerEntrypoint := Seq("sh", s"/opt/docker/bin/${name.value}"),
+    // dockerEntrypoint := Seq("sh", s"/opt/docker/bin/${name.value}"),
     // Entrypoint script interprets CMD as Java classname/method designator.
     // We have to specify handler method here.
     dockerCmd := Seq(
